@@ -1,0 +1,11 @@
+export const CREATE_COACH = "CREATE_COACH";
+export const UPDATE_COACH = "UPDATE_COACH";
+export const DELETE_COACH = "DELETE_COACH";
+export const FETCH_ALL_COACH = "FETCH_ALL_COACH";
+export const FETCH_COACH_BY_SEARCH = "FETCH_COACH_BY_SEARCH";
+export const FETCH_COACH = "FETCH_COACH";
+export const LIKE_COACH = "LIKE_COACH";
+export const COMMENT_COACH = "COMMENT_COACH";
+export const END_LOADING = "END_LOADING";
+export const START_LOADING = "START_LOADING";
+export const FETCH_POST_BY_SEARCH = "FETCH_POST_BY_SEARCH";

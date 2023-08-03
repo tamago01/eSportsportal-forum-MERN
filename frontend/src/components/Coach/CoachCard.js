@@ -1,0 +1,187 @@
+import React, { useEffect, useState, useContext } from "react";
+import { UserContext } from "../../middlewares/User-state";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
+import { formatTimeSinceCreation } from "../../middlewares/User-state";
+import DeleteIcon from "@mui/icons-material/Delete";
+// import Khalti from "../../khalti/Khalti";
+import Comment from "./Comment";
+import Loading from "../loading";
+import Khalti from "../../Khalti";
+const CoachCard = ({ id }) => {
+  const { data } = useContext(UserContext);
+  const navigate = useNavigate();
+  const [coach, setCoach] = useState([]);
+  const [currentCoach, setCurrentCoach] = useState(null);
+  const [commentData, setCommentData] = useState("");
+
+  const deleteCoach = (id, name) => {
+    if (window.confirm(`Are you sure you want to delete ${name}`)) {
+      fetch("http://localhost:4000/deleteCoach", {
+        method: "POST",
+        crossDomain: true,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          coachid: id,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          alert(data.data);
+          navigate("/coach");
+        });
+    } else {
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      axios
+        .get(`http://localhost:4000/api/coach/${id}`)
+        .then((res) => {
+          setCurrentCoach(res.data);
+        })
+        .catch((err) => console.error(err));
+    };
+    fetchData();
+  }, [id]);
+
+  const updateVotes = async (action) => {
+    const author = data.signed_user._id;
+
+    switch (action) {
+      case "upvote": {
+        axios
+          .put(`http://localhost:4000/api/coach/${currentCoach._id}/upvote`, { author })
+          .then((res) => setCurrentCoach(res.data))
+          .catch((err) => console.log(err));
+        break;
+      }
+      case "downvote": {
+        axios
+          .put(`http://localhost:4000/api/coach/${currentCoach._id}/downvote`, { author })
+          .then((res) => setCurrentCoach(res.data))
+          .catch((err) => console.log(err));
+        break;
+      }
+      case "deleteCoach": {
+        axios
+          .delete(`http://localhost:4000/api/coach/${currentCoach._id}/deleteCoach`, { author })
+          .then((res) => setCurrentCoach(res.data))
+          .catch((err) => console.log(err));
+        break;
+      }
+      default: {
+        return;
+      }
+    }
+  };
+
+  const submitComment = async (e) => {
+    if (e.keyCode === 13) {
+      console.log(data);
+      await axios
+        .put(`http://localhost:4000/api/coach/update/comment`, { author: data.signed_user._id, coachId: id, content: commentData })
+        .then((res) => setCurrentCoach(res.data))
+        .catch((err) => console.log(err));
+      setCommentData("");
+    }
+  };
+
+  return (
+    <div className="post-card flex w-full">
+      <div className="flex flex-col items-center mr-2 text-5xl select-none">
+        <div className=" cursor-pointer hover:text-slate-400 -m-4" onClick={() => updateVotes("upvote")}>
+          <MdArrowDropUp />
+        </div>
+        <p className="text-lg">{currentCoach?.votes}</p>
+
+        <div className="cursor-pointer hover:text-slate-400 -m-4" onClick={() => updateVotes("downvote")}>
+          <MdArrowDropDown />
+        </div>
+      </div>
+      <div className="flex flex-col space-x-3 bg-white dark:bg-slate-700  w-full px-4 shadow-lg">
+        {currentCoach ? (
+          <div className="flex flex-col justify-between py-2 w-full">
+            <div className=" mb-2">
+              <div className="flex space-x-2  justify-content items-center mb-2">
+                <div>
+                  <Link to={`/user/${currentCoach.author?._id}`}>
+                    <img src={currentCoach.author?.avatar} alt="" className="w-8 h-8 rounded-full" />
+                  </Link>
+                </div>
+                <div className="hover:underline hover:text-blue-400">
+                  <Link to={`/user/${currentCoach.author?._id}`}>
+                    <p className="text-lg">{currentCoach?.author?.username}</p>
+                  </Link>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm">{formatTimeSinceCreation(currentCoach?.createdAt)}</p>
+                </div>
+                {/* Delete Icon and Khalti Component */}
+                &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
+                &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;
+                <div className="flex space-x-2 items-center">
+                  <Khalti />
+                  {data.signed_user._id === currentCoach.author._id || data.signed_user.userType === "admin" ? (
+                    <DeleteIcon onClick={() => deleteCoach(currentCoach._id, currentCoach.title)} className="cursor-pointer hover:text-red-500" />
+                  ) : null}
+                </div>
+                {/* <Khalti />
+                {data.signed_user._id === currentCoach.author._id || data.signed_user.userType === "admin" ? <DeleteIcon onClick={() => deleteCoach(currentCoach._id, currentCoach.title)} /> : null} */}
+              </div>
+              <h3 className="text-xl font-semibold">{currentCoach.title}</h3>
+              <p className="text-sm break-all">{currentCoach.description}</p>
+              <div className="space-x-2">
+                {currentCoach.tags?.map((tag) => {
+                  if (tag === "") {
+                    return;
+                  }
+                  return (
+                    <span key={tag} className="tag">
+                      {tag}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex justify-center ">
+              <img src={currentCoach.image} alt="" className="h-full max-h-screen" />
+            </div>
+            <div className="flex items-center justify-between my-2 border-b-2 ">
+              <div className="flex space-x-2 items-end">
+                <p>{currentCoach.comments.length} Comments</p>
+              </div>
+            </div>
+            {data.isLoggedIn ? (
+              <div className="my-2 text-black">
+                <input className="w-full" type="text" placeholder="What are your thoughts?" value={commentData} onChange={(e) => setCommentData(e.target.value)} onKeyDown={(e) => submitComment(e)} />
+              </div>
+            ) : (
+              <Link to="/login">
+                <div className="w-max py-1 px-2 rounded-lg space-x-3 text-lg bg-white">
+                  <input className="form-input focus:ring-0 border-none text-black" type="text" placeholder="Log in or sign up to leave a comment" />
+                  <button className="bg-transparent dark:text-black border-2 border-slate-500 px-4 rounded-full">Log in</button>
+                  <button className="bg-transparent text-black border-2 border-slate-500 px-4 rounded-full">Sign up</button>
+                </div>
+              </Link>
+            )}
+            {currentCoach.comments?.map((comment) => {
+              return <Comment key={comment._id} comment={comment} />;
+            })}
+          </div>
+        ) : (
+          <Loading />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CoachCard;
